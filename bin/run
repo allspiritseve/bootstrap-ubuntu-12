@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Run files in the context of a particular app
+#
+# Directions: Put this file in /usr/local/bin/run and make sure it is
+# executable (sudo chmod +x /usr/local/bin/run)
+#
+# Usage: run COMMAND --app APP
+#
+# Alternatively, you could run the command from an application's root
+# directory, and you can skip the --app parameter.
+
+if [[ `pwd` =~ /var/www/([^\/]+) ]]; then
+  app=${BASH_REMATCH[1]}
+  options=("$@")
+else
+  options=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -a|--app)
+        app=$2;
+        shift
+        ;;
+      *)
+        options=("${options[@]}" "$1")
+        ;;
+    esac
+    shift
+  done
+fi
+
+if [ -z "$app" ]; then
+  echo "Usage: run COMMAND --app APP" >&2
+  exit 1
+fi
+
+# Make sure we're running as deploy
+export HOME=/home/deploy
+
+# Change directory to the current release
+cd /var/www/$app/current
+
+# Make sure we're using the right version of ruby
+source /etc/profile.d/chruby.sh
+chruby `cat .ruby-version`
+
+# Make sure we have all the application-specific environmental veriables
+export `cat .env`
+
+# If our command matches a predefined set, run with bundle exec
+for cmd in newrelic puma rails rake sidekiq sidekiqctl whenever
+do
+  if [ "$cmd" == "${options[0]}" ]; then
+    echo " -> bundle exec ${options[@]}"
+    bundle exec ${options[@]}
+    exit;
+  fi
+done
+
+# Otherwise, just run command
+${options[@]}

@@ -1,0 +1,54 @@
+upstream puma_townstage {
+  server 127.0.0.1:8000 fail_timeout=0;
+}
+
+server {
+  listen 80;
+  listen 443 ssl;
+
+  keepalive_timeout 5;
+  root /var/www/townstage.com/current/public;
+  server_name townstage.com api.townstage.com;
+  ssl_certificate /etc/ssl/certs/townstage-bundle.crt;
+  ssl_certificate_key /etc/ssl/private/townstage.key;
+
+  location ~ ^/assets/ {
+    add_header Cache-Control public;
+    add_header ETag "";
+    add_header Last-Modified "";
+    expires max;
+    gzip_static on;
+
+    break;
+  }
+
+  try_files $uri/index.html $uri.html $uri @app;
+
+  location @app {
+    proxy_buffer_size 64k;
+    proxy_buffers 32 32k;
+    proxy_pass http://puma_townstage;
+    proxy_redirect off;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-NginX-Proxy true;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  error_page 500 502 503 504 /500.html;
+
+  location = /500.html {
+    root /var/www/townstage.com/current/public;
+  }
+}
+
+server {
+  listen 80;
+  listen 443 ssl;
+  server_name www.townstage.com;
+  location / {
+    rewrite ^ $scheme://townstage.com$request_uri permanent;
+  }
+}
+

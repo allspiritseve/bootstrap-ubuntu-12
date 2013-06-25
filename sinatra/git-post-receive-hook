@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Fail loudly
+set -e
+
+app=ditties.townstage.com
+app_root=/var/www/$app
+current="$app_root/releases/$(date +"%Y%m%d%H%M")"
+
+# Set up environmental variables
+unset GIT_DIR
+export `cat $app_root/shared/.env`
+
+pretty_print() {
+  echo -e "\033[G$@\033[K"
+}
+
+test -d $current || mkdir -v $current
+git archive master | tar -x -C $current
+
+test -d $current/public || mkdir $current/public
+test -d $current/vendor || mkdir $current/vendor
+for shared in config/database.yml config/puma.rb .env log public/assets public/uploads tmp vendor/bundle
+do
+rm -rf $current/$shared
+ln -nsf $app_root/shared/$shared $current/$shared
+done
+
+cd $current
+
+source /etc/profile.d/chruby.sh
+chruby `cat .ruby-version`
+
+# run sidekiqctl quiet tmp/sidekiq.pid
+
+bundle install --without development:test --binstubs vendor/bundle/bin --deployment
+bundle exec rake assets:precompile
+# rake db:migrate
+
+ln -nsf $current $app_root/current
+
+test -s tmp/puma.pid && kill -USR2 `cat tmp/puma.pid`
+# sidekiqctl stop tmp/sidekiq.pid 60
+
+# newrelic deployments --app $app
+
+pretty_print
+pretty_print "Ladies and gentlemen, we have successfully deployed to Linode!"
+pretty_print
