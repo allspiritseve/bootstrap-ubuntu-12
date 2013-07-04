@@ -66,11 +66,11 @@ apt-get -y install libpq-dev
 apt-add-repository -y ppa:pitti/postgresql
 
 # -> Ubuntu 13.04 via apt.postgresql.org
-# echo "deb http://apt.postgresql.org/pub/repos/apt/ quantal-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+# echo "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 # wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
 
 apt-get -y update
-apt-get install postgresql-9.2
+aptitude -y install postgresql-9.2
 
 # Redis
 apt-get -y install redis-server
