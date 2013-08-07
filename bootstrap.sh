@@ -8,8 +8,6 @@
 # and then servers would be provisioned using the image.
 
 hostname=thorin.townstage.com
-ruby_version=2.0.0-p0
-chruby_version=0.3.6
 
 # Fail immediately
 set -e
@@ -26,10 +24,10 @@ apt-get -y install software-properties-common
 
 # Chruby
 if [ ! -e /usr/local/bin/chruby ]; then
-  wget -O /tmp/chruby-$chruby_version.tar.gz https://github.com/postmodern/chruby/archive/v$chruby_version.tar.gz
-  tar -xzvf /tmp/chruby-$chruby_version.tar.gz -C /tmp
-  (cd /tmp/chruby-$chruby_version && make install)
-  rm -rf /tmp/chruby-$chruby_version /tmp/chruby-$chruby_version.tar.gz
+  wget -O /tmp/chruby-0.3.6.tar.gz https://github.com/postmodern/chruby/archive/v0.3.6.tar.gz
+  tar -xzvf /tmp/chruby-0.3.6.tar.gz -C /tmp
+  (cd /tmp/chruby-0.3.6 && make install)
+  rm -rf /tmp/chruby-0.3.6 /tmp/chruby-0.3.6.tar.gz
 fi
 
 # Git
@@ -70,6 +68,7 @@ apt-add-repository -y ppa:pitti/postgresql
 # wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
 
 apt-get -y update
+aptitude -y install postgresql-common
 aptitude -y install postgresql-9.2
 
 # Redis
@@ -87,8 +86,8 @@ if [ ! -e /usr/local/bin/ruby-build ]; then
   rm -rf /tmp/ruby-build
 fi
 
-if [ ! -d /opt/rubies/ruby-$ruby_version ]; then
-  ruby-build $ruby_version /opt/rubies/ruby-$ruby_version
+if [ ! -d /opt/rubies/ruby-2.0.0-p247 ]; then
+  ruby-build 2.0.0-p247 /opt/rubies/ruby-2.0.0-p247
 fi
 
 cp home/.gemrc ~/.gemrc
